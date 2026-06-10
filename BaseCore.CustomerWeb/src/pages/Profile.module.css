@@ -1,0 +1,135 @@
+.page {
+  padding: 40px 20px;
+  min-height: 60vh;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.avatarSection {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--teal, #2a9d8f);
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.displayName {
+  margin: 0;
+  font-size: 1.4rem;
+  font-family: var(--font-display, sans-serif);
+  color: var(--text, #1a1a2e);
+}
+
+.username {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted, #6b7280);
+  font-size: 0.9rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.8rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+.cardTitle {
+  margin: 0 0 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text, #1a1a2e);
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+
+.field input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #1a1a2e;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--teal, #2a9d8f);
+}
+
+.btnSave {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.7rem;
+  background: var(--teal, #2a9d8f);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btnSave:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btnSave:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success {
+  color: #16a34a;
+  font-size: 0.88rem;
+  margin: 0.5rem 0;
+}
+
+.error {
+  color: #e53935;
+  font-size: 0.88rem;
+  margin: 0.5rem 0;
+}

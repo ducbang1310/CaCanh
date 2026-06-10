@@ -141,6 +141,12 @@ namespace BaseCore.APIService.Controllers
             var order = await _orderRepository.GetByIdAsync(id);
             if (order == null) return NotFound(new { message = "Order not found" });
 
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            if (order.UserId != userId && !User.IsInRole("Admin"))
+                return Forbid();
+
             // Auto-cancel nếu quá 24h
             await CheckAndAutoCancelOrder(order);
 
@@ -226,8 +232,14 @@ namespace BaseCore.APIService.Controllers
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> CancelOrder(int id)
         {
+            var userId = GetUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
             var order = await _orderRepository.GetByIdAsync(id);
             if (order == null) return NotFound(new { message = "Order not found" });
+
+            if (order.UserId != userId && !User.IsInRole("Admin"))
+                return Forbid();
 
             if (order.Status == "Cancelled")
                 return BadRequest(new { message = "Đơn hàng đã được huỷ trước đó" });

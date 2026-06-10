@@ -84,14 +84,22 @@ export default function Header() {
           {user ? (
             <div className={styles.userMenu}>
               <button className={styles.userBtn} onClick={() => setUserMenuOpen(!userMenuOpen)}>
-                👤 {user.username}
+                👤 {user.name || user.username}
               </button>
               {userMenuOpen && (
                 <div className={styles.userDropdown}>
                   <div className={styles.userInfo}>
-                    <p><strong>{user.name}</strong></p>
+                    <p><strong>{user.name || user.username}</strong></p>
                     <p>{user.email}</p>
                   </div>
+
+                  <Link
+                    to="/profile"
+                    style={{ display: 'block', padding: '8px 12px', textDecoration: 'none', color: '#374151', fontSize: '0.9rem' }}
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    👤 Hồ sơ cá nhân
+                  </Link>
 
                   <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid #eee' }} />
 

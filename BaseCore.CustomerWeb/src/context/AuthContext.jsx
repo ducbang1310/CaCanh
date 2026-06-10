@@ -40,6 +40,12 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem('auth')
   }
 
+  const updateUser = (updates) => {
+    const updated = { ...user, ...updates }
+    setUser(updated)
+    sessionStorage.setItem('auth', JSON.stringify(updated))
+  }
+
   // Check if user has specific role
   const hasRole = (role) => {
     if (!user) return false
@@ -50,7 +56,7 @@ export function AuthProvider({ children }) {
   const isAdmin = () => hasRole('admin') || hasRole('Admin')
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, hasRole, isAdmin }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading, hasRole, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )

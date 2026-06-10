@@ -1,6 +1,32 @@
 import { buildUrl, getHeaders, handleResponse } from '../utils/apiClient';
 
 export const userService = {
+  getMe: async () => {
+    const response = await fetch(buildUrl('/api/users/me'), {
+      method: 'GET',
+      headers: getHeaders(true),
+    });
+    return handleResponse(response, 'Failed to fetch profile');
+  },
+
+  updateMe: async (data) => {
+    const response = await fetch(buildUrl('/api/users/me'), {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response, 'Failed to update profile');
+  },
+
+  changeMyPassword: async (oldPassword, newPassword) => {
+    const response = await fetch(buildUrl('/api/users/me/change-password'), {
+      method: 'PUT',
+      headers: getHeaders(true),
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+    return handleResponse(response, 'Failed to change password');
+  },
+
   getAll: async (params = {}) => {
     const queryParams = {
       page: params.page || 1,

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using BaseCore.Common;
 using BaseCore.Entities;
 using BaseCore.Services.Authen;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BaseCore.AuthService.Controllers
@@ -18,6 +20,86 @@ namespace BaseCore.AuthService.Controllers
         public UserController(IUserService userService)
         {
             _userService = userService;
+        }
+
+        private string? GetCurrentUserId() =>
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value
+            ?? User.FindFirst("id")?.Value;
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe()
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var user = await _userService.GetById(userId);
+            if (user == null) return NotFound(new { message = "User not found" });
+
+            return Ok(new UserResponse
+            {
+                Id = user.Id,
+                Username = user.UserName,
+                Name = user.Name,
+                Email = user.Email,
+                Phone = user.Phone,
+                Position = user.Position,
+                IsActive = user.IsActive,
+                UserType = user.UserType,
+                Created = user.Created
+            });
+        }
+
+        [HttpPut("me")]
+        public async Task<IActionResult> UpdateMe([FromBody] UpdateProfileRequest request)
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var user = await _userService.GetById(userId);
+            if (user == null) return NotFound(new { message = "User not found" });
+
+            user.Name = request.Name ?? user.Name;
+            user.Email = request.Email ?? user.Email;
+            user.Phone = request.Phone ?? user.Phone;
+
+            await _userService.Update(user);
+
+            return Ok(new UserResponse
+            {
+                Id = user.Id,
+                Username = user.UserName,
+                Name = user.Name,
+                Email = user.Email,
+                Phone = user.Phone,
+                Position = user.Position,
+                IsActive = user.IsActive,
+                UserType = user.UserType,
+                Created = user.Created
+            });
+        }
+
+        [HttpPut("me/change-password")]
+        public async Task<IActionResult> ChangeMyPassword([FromBody] ChangePasswordRequest request)
+        {
+            if (string.IsNullOrEmpty(request.OldPassword) || string.IsNullOrEmpty(request.NewPassword))
+                return BadRequest(new { message = "Vui lòng nhập đầy đủ mật khẩu cũ và mới" });
+
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var user = await _userService.GetById(userId);
+            if (user == null) return NotFound(new { message = "User not found" });
+
+            bool isValid = user.Salt != null && user.Salt.Length > 0
+                ? TokenHelper.IsValidPassword(request.OldPassword, user.Salt, user.Password)
+                : user.Password == request.OldPassword;
+
+            if (!isValid)
+                return BadRequest(new { message = "Mật khẩu cũ không đúng" });
+
+            await _userService.Update(user, request.NewPassword);
+            return Ok(new { message = "Đổi mật khẩu thành công" });
         }
 
         [HttpGet]
@@ -205,5 +287,18 @@ namespace BaseCore.AuthService.Controllers
         public string Position { get; set; }
         public int? UserType { get; set; }
         public bool? IsActive { get; set; }
+    }
+
+    public class UpdateProfileRequest
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+    }
+
+    public class ChangePasswordRequest
+    {
+        public string OldPassword { get; set; }
+        public string NewPassword { get; set; }
     }
 }
