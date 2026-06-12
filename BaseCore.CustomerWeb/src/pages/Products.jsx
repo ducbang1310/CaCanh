@@ -5,6 +5,25 @@ import { categoryService } from '../services/category/categoryService'
 import ProductCard from '../components/ProductCard'
 import styles from './Products.module.css'
 
+const CATEGORY_ICONS = [
+  { keywords: ['nước ngọt', 'freshwater'], icon: '🐟' },
+  { keywords: ['biển', 'marine', 'nước mặn'], icon: '🐠' },
+  { keywords: ['vàng', 'koi', 'chép'], icon: '🐡' },
+  { keywords: ['betta', 'xiêm', 'lia thia'], icon: '🦋' },
+  { keywords: ['tép', 'shrimp'], icon: '🦐' },
+  { keywords: ['cây', 'thủy sinh', 'rong', 'thực vật'], icon: '🌿' },
+  { keywords: ['thức ăn', 'thức an', 'cám', 'food'], icon: '🍤' },
+  { keywords: ['phụ kiện', 'bể', 'lọc', 'đèn', 'máy'], icon: '🔧' },
+  { keywords: ['rùa', 'ếch', 'lưỡng cư'], icon: '🐢' },
+  { keywords: ['ốc', 'snail'], icon: '🐌' },
+]
+
+function getCategoryIcon(name = '') {
+  const lower = name.toLowerCase()
+  const match = CATEGORY_ICONS.find(({ keywords }) => keywords.some(k => lower.includes(k)))
+  return match ? match.icon : '🐾'
+}
+
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams()
   const catFilter = searchParams.get('cat') || ''
@@ -91,8 +110,7 @@ export default function Products() {
               className={`${styles.catBtn} ${!catFilter ? styles.active : ''}`}
               onClick={() => handleCategoryClick('all')}
             >
-              {/* FIX 8: hiển thị tổng đúng */}
-              Tất cả ({totalCount})
+              🐠 Tất cả ({totalCount})
             </button>
             {categories.map(c => (
               <button
@@ -100,7 +118,7 @@ export default function Products() {
                 className={`${styles.catBtn} ${catFilter === c.id.toString() ? styles.active : ''}`}
                 onClick={() => handleCategoryClick(c.id)}
               >
-                📦 {c.name}
+                {getCategoryIcon(c.name)} {c.name}
               </button>
             ))}
           </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useWishlist } from '../context/WishlistContext'
 import styles from './ProductCard.module.css'
 
 function formatPrice(n) {
@@ -151,8 +152,10 @@ function GenderPopup({ product, onConfirm, onClose }) {
 
 export default function ProductCard({ product }) {
   const { add } = useCart()
+  const { toggle, isSaved } = useWishlist()
   const [showPopup, setShowPopup] = useState(false)
   const [added, setAdded] = useState(false)
+  const saved = isSaved(product.id)
 
   const discount = product.oldPrice
     ? Math.round((1 - product.price / product.oldPrice) * 100)
@@ -184,6 +187,13 @@ export default function ProductCard({ product }) {
           <img src={product.imageUrl || product.image || 'https://via.placeholder.com/300x300'} alt={product.name} loading="lazy" />
           {discount && <span className={styles.discount}>-{discount}%</span>}
         </Link>
+        <button
+          className={styles.wishBtn}
+          onClick={() => toggle(product)}
+          title={saved ? 'Bỏ yêu thích' : 'Lưu yêu thích'}
+        >
+          {saved ? '❤️' : '🤍'}
+        </button>
         <div className={styles.body}>
           <Link to={`/product/${product.id}`}>
             <h3 className={styles.name}>{product.name}</h3>

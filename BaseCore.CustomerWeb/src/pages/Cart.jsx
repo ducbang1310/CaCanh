@@ -194,7 +194,10 @@ export default function Cart() {
                 <div className={styles.qtyControl}>
                   <button onClick={() => item.quantity === 1 ? remove(item.id) : setQty(item.id, item.quantity - 1)}>−</button>
                   <span>{item.quantity}</span>
-                  <button onClick={() => setQty(item.id, item.quantity + 1)}>+</button>
+                  <button
+                    onClick={() => setQty(item.id, item.quantity + 1)}
+                    disabled={item.stock !== null && item.quantity >= item.stock}
+                  >+</button>
                 </div>
 
                 <span className={styles.itemTotal}>{formatPrice(item.price * item.quantity)}</span>

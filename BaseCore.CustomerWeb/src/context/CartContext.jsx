@@ -46,6 +46,7 @@ const mapCartItems = (items) =>
     quantity: i.quantity,
     image: i.imageUrl,
     selectedGender: i.selectedGender ?? null,
+    stock: i.availableStock ?? i.stock ?? null,
   }));
 
 export function CartProvider({ children }) {

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { WishlistProvider } from './context/WishlistContext'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -15,6 +16,7 @@ import Login from './pages/Login'
 import OrderHistory from './pages/OrderHistory'
 import Payment from './pages/Payment'
 import Profile from './pages/Profile'
+import Wishlist from './pages/Wishlist'
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard'
@@ -49,6 +51,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <WishlistProvider>
         <CartProvider>
           <Routes>
             {/* Customer */}
@@ -61,6 +64,7 @@ export default function App() {
             <Route path="/orders" element={<CustomerLayout><OrderHistory /></CustomerLayout>} />
             <Route path="/payment/:orderId" element={<CustomerLayout><Payment /></CustomerLayout>} />
             <Route path="/profile" element={<CustomerLayout><Profile /></CustomerLayout>} />
+            <Route path="/wishlist" element={<CustomerLayout><Wishlist /></CustomerLayout>} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminRoute><Dashboard /></AdminRoute>} />
@@ -74,6 +78,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </CartProvider>
+        </WishlistProvider>
       </AuthProvider>
     </BrowserRouter>
   )

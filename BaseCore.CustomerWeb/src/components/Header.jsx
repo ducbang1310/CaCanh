@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { useWishlist } from '../context/WishlistContext'
 import { categoryService } from '../services/category/categoryService'
 import styles from './Header.module.css'
 
 export default function Header() {
   const { count } = useCart()
   const { user, logout, isAdmin } = useAuth()
+  const { wishlist } = useWishlist()
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -68,6 +70,12 @@ export default function Header() {
         </form>
 
         <div className={styles.rightNav}>
+          {/* Nút yêu thích */}
+          <Link to="/wishlist" className={styles.cartBtn} title="Sản phẩm yêu thích">
+            <span className={styles.cartIcon}>{wishlist.length > 0 ? '❤️' : '🤍'}</span>
+            {wishlist.length > 0 && <span className={styles.badge}>{wishlist.length}</span>}
+          </Link>
+
           {/* Nút giỏ hàng */}
           <Link to="/cart" className={styles.cartBtn}>
             <span className={styles.cartIcon}>🛒</span>

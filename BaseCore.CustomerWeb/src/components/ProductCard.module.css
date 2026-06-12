@@ -5,6 +5,7 @@
   border: 1px solid var(--border);
   transition: transform 0.25s, box-shadow 0.25s;
   animation: fadeUp 0.4s ease forwards;
+  position: relative;
 }
 
 .card:hover {
@@ -102,4 +103,27 @@
   background: var(--teal);
   color: white;
   border-color: var(--teal);
+}
+
+.wishBtn {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(4px);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, background 0.15s;
+  z-index: 1;
+}
+
+.wishBtn:hover {
+  transform: scale(1.15);
+  background: #fff;
 }
