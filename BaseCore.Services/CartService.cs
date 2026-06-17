@@ -41,7 +41,7 @@ namespace BaseCore.Services
             if (selectedGender == "Cặp")
             {
                 // Nếu có pairPrice, dùng nó; nếu không thì dùng price
-                return product.PairPrice ?? product.Price;
+                return product.PairPrice ?? (product.Price * 2);
             }
             return product.Price;
         }
