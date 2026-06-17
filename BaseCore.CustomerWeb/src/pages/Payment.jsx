@@ -78,7 +78,10 @@ export default function Payment() {
   useEffect(() => {
     const d = order?.orderDate
     if (!d) return
-    const deadline = new Date(d).getTime() + 24 * 3600 * 1000
+    // Backend lưu DateTime.UtcNow nhưng JSON không có "Z" → JS hiểu nhầm là local time
+    // Thêm "Z" để parse đúng UTC
+    const utcDate = d.endsWith('Z') ? d : d + 'Z'
+    const deadline = new Date(utcDate).getTime() + 24 * 3600 * 1000
     const tick = () => {
       const remaining = deadline - Date.now()
       setTimeLeft(remaining)

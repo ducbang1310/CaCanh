@@ -174,7 +174,7 @@ export default function OrderHistory() {
                           </span>
                         )}
                       </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{new Date(order.orderDate?.endsWith?.('Z') ? order.orderDate : order.orderDate + 'Z').toLocaleString('vi-VN')}</td>
                       <td className={styles.totalAmount}>{formatPrice(order.totalAmount)}</td>
                       <td>{renderStatus(order.status)}</td>
                       {/* FIX 6+7: fix lệch - dùng div flex wrap, thêm nút Theo dõi đơn hàng */}

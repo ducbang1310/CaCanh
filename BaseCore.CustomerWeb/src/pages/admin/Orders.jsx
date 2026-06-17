@@ -286,8 +286,8 @@ export default function Orders() {
                               <div><small className="text-muted">{order.customerPhone || ''}</small></div>
                             </td>
                             <td>
-                              <div>{new Date(order.orderDate).toLocaleDateString('vi-VN')}</div>
-                              <div><small className="text-muted">{new Date(order.orderDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</small></div>
+                              <div>{new Date(order.orderDate?.endsWith?.('Z') ? order.orderDate : order.orderDate + 'Z').toLocaleDateString('vi-VN')}</div>
+                              <div><small className="text-muted">{new Date(order.orderDate?.endsWith?.('Z') ? order.orderDate : order.orderDate + 'Z').toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</small></div>
                             </td>
                             <td><strong>{order.totalAmount && order.totalAmount.toLocaleString('vi-VN')} đ</strong></td>
                             <td>
@@ -375,7 +375,7 @@ export default function Orders() {
                               </tr>
                               <tr>
                                 <td className="text-muted pl-0">📅 Ngày đặt</td>
-                                <td>{new Date(selected.orderDate).toLocaleString('vi-VN')}</td>
+                                <td>{new Date(selected.orderDate?.endsWith?.('Z') ? selected.orderDate : selected.orderDate + 'Z').toLocaleString('vi-VN')}</td>
                               </tr>
                             </tbody>
                           </table>
