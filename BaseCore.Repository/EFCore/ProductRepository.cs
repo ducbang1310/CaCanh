@@ -8,7 +8,7 @@ namespace BaseCore.Repository.EFCore
     /// </summary>
     public interface IProductRepositoryEF : IRepository<Product>
     {
-        Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize);
+        Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize, string? sortBy = null);
         Task<List<Product>> GetByCategoryAsync(int categoryId);
         Task GetProducts();
     }
@@ -19,7 +19,7 @@ namespace BaseCore.Repository.EFCore
         {
         }
 
-        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize)
+        public async Task<(List<Product> Products, int TotalCount)> SearchAsync(string? keyword, int? categoryId, int page, int pageSize, string? sortBy = null)
         {
             var query = _dbSet.Include(p => p.Category).AsQueryable();
 
@@ -38,8 +38,18 @@ namespace BaseCore.Repository.EFCore
 
             var totalCount = await query.CountAsync();
 
+            query = sortBy switch
+            {
+                "price-asc" => query.OrderBy(p => p.Price),
+                "price-desc" => query.OrderByDescending(p => p.Price),
+                "rating" => query.OrderByDescending(p =>
+                    _context.Reviews
+                        .Where(r => r.ProductId == p.Id)
+                        .Average(r => (double?)r.Rating) ?? 0),
+                _ => query.OrderByDescending(p => p.Id)
+            };
+
             var products = await query
-                .OrderByDescending(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

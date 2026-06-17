@@ -12,6 +12,7 @@ import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
 import Blog from './pages/Blog'
+import BlogDetail from './pages/BlogDetail'
 import Login from './pages/Login'
 import OrderHistory from './pages/OrderHistory'
 import Payment from './pages/Payment'
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="/product/:id" element={<CustomerLayout><ProductDetail /></CustomerLayout>} />
             <Route path="/cart" element={<CustomerLayout><Cart /></CustomerLayout>} />
             <Route path="/blog" element={<CustomerLayout><Blog /></CustomerLayout>} />
+            <Route path="/blog/:id" element={<CustomerLayout><BlogDetail /></CustomerLayout>} />
             <Route path="/login" element={<Login />} />
             <Route path="/orders" element={<CustomerLayout><OrderHistory /></CustomerLayout>} />
             <Route path="/payment/:orderId" element={<CustomerLayout><Payment /></CustomerLayout>} />

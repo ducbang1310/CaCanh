@@ -40,18 +40,18 @@ export default function Products() {
   const [totalCount, setTotalCount] = useState(0)   // tổng TRƯỚC khi lọc giá local
   const [totalPages, setTotalPages] = useState(1)
 
-  // FIX 9: reset về page 1 khi đổi danh mục hoặc query
+  // Reset về page 1 khi đổi danh mục, query hoặc sort
   useEffect(() => {
     setPage(1)
-  }, [catFilter, query])
+  }, [catFilter, query, sort])
 
-  // Fetch products
+  // Fetch products — sort được xử lý ở backend
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true)
         const categoryId = catFilter ? parseInt(catFilter) : null
-        const res = await productService.getAll(query, categoryId, page, pageSize)
+        const res = await productService.getAll(query, categoryId, page, pageSize, sort)
         setProducts(res.items || [])
         setTotalCount(res.totalCount || 0)
         setTotalPages(res.totalPages || Math.ceil((res.totalCount || 0) / pageSize))
@@ -62,7 +62,7 @@ export default function Products() {
       }
     }
     fetchProducts()
-  }, [query, catFilter, page])
+  }, [query, catFilter, page, sort])
 
   // Fetch categories
   useEffect(() => {
@@ -71,16 +71,8 @@ export default function Products() {
       .catch(() => {})
   }, [])
 
-  // Sort locally
-  const sorted = [...products].sort((a, b) => {
-    if (sort === 'price-asc') return (a.price || 0) - (b.price || 0)
-    if (sort === 'price-desc') return (b.price || 0) - (a.price || 0)
-    if (sort === 'rating') return (b.rating || 0) - (a.rating || 0)
-    return 0
-  })
-
-  // Filter by price locally
-  const filtered = sorted.filter(p => (p.price || 0) <= priceRange)
+  // Backend đã sort → chỉ cần lọc giá local
+  const filtered = products.filter(p => (p.price || 0) <= priceRange)
 
   const handleCategoryClick = (id) => {
     // FIX 9: reset page về 1 khi chọn danh mục
