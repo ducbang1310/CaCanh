@@ -37,21 +37,29 @@ export default function Products() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [totalCount, setTotalCount] = useState(0)   // tổng TRƯỚC khi lọc giá local
+  const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const [allCount, setAllCount] = useState(0)      // tổng TẤT CẢ sản phẩm (không filter)
 
-  // Reset về page 1 khi đổi danh mục, query hoặc sort
+  // Reset về page 1 khi đổi danh mục, query, sort hoặc giá
   useEffect(() => {
     setPage(1)
-  }, [catFilter, query, sort])
+  }, [catFilter, query, sort, priceRange])
 
-  // Fetch products — sort được xử lý ở backend
+  // Debounce giá — tránh gọi API liên tục khi kéo thanh
+  const [debouncedPrice, setDebouncedPrice] = useState(priceRange)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedPrice(priceRange), 300)
+    return () => clearTimeout(timer)
+  }, [priceRange])
+
+  // Fetch products — sort + lọc giá đều xử lý ở backend
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true)
         const categoryId = catFilter ? parseInt(catFilter) : null
-        const res = await productService.getAll(query, categoryId, page, pageSize, sort)
+        const res = await productService.getAll(query, categoryId, page, pageSize, sort, debouncedPrice)
         setProducts(res.items || [])
         setTotalCount(res.totalCount || 0)
         setTotalPages(res.totalPages || Math.ceil((res.totalCount || 0) / pageSize))
@@ -62,17 +70,20 @@ export default function Products() {
       }
     }
     fetchProducts()
-  }, [query, catFilter, page, sort])
+  }, [query, catFilter, page, sort, debouncedPrice])
 
-  // Fetch categories
+  // Fetch categories + tổng số sản phẩm (1 lần khi mount)
   useEffect(() => {
     categoryService.getAll()
       .then(res => setCategories(res))
       .catch(() => {})
+    productService.getAll('', null, 1, 1)
+      .then(res => setAllCount(res.totalCount || 0))
+      .catch(() => {})
   }, [])
 
-  // Backend đã sort → chỉ cần lọc giá local
-  const filtered = products.filter(p => (p.price || 0) <= priceRange)
+  // Backend đã lọc giá + sort → dùng trực tiếp
+  const filtered = products
 
   const handleCategoryClick = (id) => {
     // FIX 9: reset page về 1 khi chọn danh mục
@@ -102,7 +113,7 @@ export default function Products() {
               className={`${styles.catBtn} ${!catFilter ? styles.active : ''}`}
               onClick={() => handleCategoryClick('all')}
             >
-              🐠 Tất cả ({totalCount})
+              🐠 Tất cả ({allCount})
             </button>
             {categories.map(c => (
               <button

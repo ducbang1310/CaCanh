@@ -1,11 +1,12 @@
 import { buildUrl, getHeaders, handleResponse } from '../utils/apiClient';
 
 export const productService = {
-  getAll: async (keyword = '', categoryId = null, page = 1, pageSize = 12, sortBy = null) => {
+  getAll: async (keyword = '', categoryId = null, page = 1, pageSize = 12, sortBy = null, maxPrice = null) => {
     const params = {};
     if (keyword) params.keyword = keyword;
     if (categoryId) params.categoryId = categoryId;
     if (sortBy && sortBy !== 'default') params.sortBy = sortBy;
+    if (maxPrice && maxPrice < 3000000) params.maxPrice = maxPrice;
     params.page = page;
     params.pageSize = pageSize;
 

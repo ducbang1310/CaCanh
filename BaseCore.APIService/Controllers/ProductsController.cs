@@ -59,9 +59,10 @@ namespace BaseCore.APIService.Controllers
             [FromQuery] int? categoryId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] string? sortBy = null)
+            [FromQuery] string? sortBy = null,
+            [FromQuery] decimal? maxPrice = null)
         {
-            var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, page, pageSize, sortBy);
+            var (products, totalCount) = await _productRepository.SearchAsync(keyword, categoryId, page, pageSize, sortBy, maxPrice);
 
             var ratings = await GetRatingsAsync(products.Select(p => p.Id));
 
