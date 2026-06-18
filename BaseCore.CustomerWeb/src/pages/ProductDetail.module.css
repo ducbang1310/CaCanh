@@ -153,6 +153,17 @@
 
 .qtyControl button:hover { background: rgba(6,182,212,0.1); }
 .qtyControl span { width: 40px; text-align: center; font-size: 15px; font-weight: 500; }
+.qtyControl input {
+  width: 50px; height: 36px;
+  text-align: center;
+  font-size: 15px; font-weight: 500;
+  border: none; outline: none;
+  background: transparent;
+  color: inherit;
+  -moz-appearance: textfield;
+}
+.qtyControl input::-webkit-outer-spin-button,
+.qtyControl input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 .actions {
   display: flex;

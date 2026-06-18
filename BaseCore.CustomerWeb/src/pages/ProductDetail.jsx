@@ -257,7 +257,19 @@ export default function ProductDetail() {
               <span>Số lượng:</span>
               <div className={styles.qtyControl}>
                 <button onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
-                <span>{qty}</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={isGenderProduct ? (selectedGenderStock ?? totalStock) : (product.stock || 0)}
+                  value={qty}
+                  onChange={e => {
+                    const max = isGenderProduct ? (selectedGenderStock ?? totalStock) : (product.stock || 0)
+                    const val = parseInt(e.target.value)
+                    if (!val || val < 1) return setQty(1)
+                    if (val > max) return setQty(max)
+                    setQty(val)
+                  }}
+                />
                 <button
                   onClick={() => setQty(q => Math.min(
                     isGenderProduct ? (selectedGenderStock ?? totalStock) : (product.stock || 0),
