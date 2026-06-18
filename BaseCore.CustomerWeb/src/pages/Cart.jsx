@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { cartService } from '../services/cart/cartService'
-import { PROVINCES } from '../data/vietnamAddress'
+import { addressService } from '../data/addressService'
 import styles from './Cart.module.css'
 
 function formatPrice(n) { return n.toLocaleString('vi-VN') + 'đ' }
@@ -19,11 +19,14 @@ export default function Cart() {
     customerName: '',
     customerPhone: '',
     province: '',
-    district: '',
+    ward: '',
     streetAddress: '',
   })
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState(null)
+  const [provinces, setProvinces] = useState([])
+  const [wards, setWards] = useState([])
+  const [wardLoading, setWardLoading] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -40,10 +43,27 @@ export default function Cart() {
   }
 
   const handleProvinceChange = (value) => {
-    setCheckoutData(prev => ({ ...prev, province: value, district: '' }))
+    setCheckoutData(prev => ({ ...prev, province: value, ward: '' }))
   }
 
-  const selectedProvince = PROVINCES.find(p => p.name === checkoutData.province)
+  // Fetch danh sách tỉnh từ API khi mount
+  useEffect(() => {
+    addressService.getProvinces()
+      .then(data => setProvinces(data))
+      .catch(() => {})
+  }, [])
+
+  // Fetch xã/phường khi đổi tỉnh
+  useEffect(() => {
+    if (!checkoutData.province) { setWards([]); return }
+    const prov = provinces.find(p => p.name === checkoutData.province)
+    if (!prov) return
+    setWardLoading(true)
+    addressService.getWards(prov.code)
+      .then(data => setWards(data))
+      .catch(() => setWards([]))
+      .finally(() => setWardLoading(false))
+  }, [checkoutData.province, provinces])
 
   const shipping = total >= 500000 ? 0 : 35000
   const grandTotal = total + shipping
@@ -68,7 +88,7 @@ export default function Cart() {
 
   const handleCheckout = async () => {
     if (!checkoutData.customerName.trim() || !checkoutData.customerPhone.trim() ||
-        !checkoutData.province || !checkoutData.district || !checkoutData.streetAddress.trim()) {
+        !checkoutData.province || !checkoutData.ward || !checkoutData.streetAddress.trim()) {
       setCheckoutError('Vui lòng điền đầy đủ thông tin giao hàng')
       return
     }
@@ -76,7 +96,7 @@ export default function Cart() {
     try {
       setCheckoutLoading(true)
       setCheckoutError(null)
-      const fullAddress = `${checkoutData.streetAddress}, ${checkoutData.district}, ${checkoutData.province}`
+      const fullAddress = `${checkoutData.streetAddress}, ${checkoutData.ward}, ${checkoutData.province}`
       const result = await cartService.checkout(
         fullAddress,
         'Standard',
@@ -301,37 +321,36 @@ export default function Cart() {
                       style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '0.95rem', background: '#fff' }}
                     >
                       <option value="">-- Chọn Tỉnh / Thành phố --</option>
-                      {PROVINCES.map(p => (
-                        <option key={p.name} value={p.name}>{p.name}</option>
+                      {provinces.map(p => (
+                        <option key={p.code} value={p.name}>{p.name}</option>
                       ))}
                     </select>
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label>Quận / Huyện *</label>
+                    <label>Phường / Xã *</label>
                     <select
-                      value={checkoutData.district}
-                      onChange={e => handleCheckoutChange('district', e.target.value)}
-                      disabled={!checkoutData.province}
-                      style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '0.95rem', background: checkoutData.province ? '#fff' : '#f5f5f5' }}
+                      value={checkoutData.ward}
+                      onChange={e => handleCheckoutChange('ward', e.target.value)}
+                      disabled={!checkoutData.province || wardLoading}
+                      style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: '0.95rem', background: checkoutData.province && !wardLoading ? '#fff' : '#f5f5f5' }}
                     >
-                      <option value="">-- Chọn Quận / Huyện --</option>
-                      {selectedProvince?.districts.map(d => (
-                        <option key={d} value={d}>{d}</option>
+                      <option value="">{wardLoading ? '⏳ Đang tải...' : '-- Chọn Phường / Xã --'}</option>
+                      {wards.map(w => (
+                        <option key={w.code} value={w.name}>{w.name}</option>
                       ))}
                     </select>
                   </div>
-
                   <div className={styles.formGroup}>
-                    <label>Số nhà, tên đường, phường/xã *</label>
+                    <label>Số nhà, tên đường *</label>
                     <input
                       type="text"
-                      placeholder="VD: 123 Nguyễn Huệ, P. Bến Nghé"
+                      placeholder="VD: 123 Nguyễn Huệ"
                       value={checkoutData.streetAddress}
                       onChange={e => handleCheckoutChange('streetAddress', e.target.value)}
                     />
                   </div>
-
+                  
                   <div style={{ background: '#fff3e0', border: '1px solid #ffb74d', borderRadius: 6, padding: '0.7rem 0.9rem', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
                     <strong style={{ color: '#e65100' }}>⚠️ Lưu ý đặt cọc:</strong> Sau khi đặt hàng, bạn cần chuyển khoản <strong style={{ color: '#e65100' }}>{formatPrice(Math.round(grandTotal * 0.5))}</strong> (50% giá trị đơn) để xác nhận. Đơn hàng sẽ bị huỷ sau 24 giờ nếu chưa nhận được cọc.
                   </div>

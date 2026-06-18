@@ -6,7 +6,7 @@ export const productService = {
     if (keyword) params.keyword = keyword;
     if (categoryId) params.categoryId = categoryId;
     if (sortBy && sortBy !== 'default') params.sortBy = sortBy;
-    if (maxPrice && maxPrice < 3000000) params.maxPrice = maxPrice;
+    if (maxPrice !== null && maxPrice !== undefined) params.maxPrice = maxPrice;
     params.page = page;
     params.pageSize = pageSize;
 

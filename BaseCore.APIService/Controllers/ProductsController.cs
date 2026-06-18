@@ -72,13 +72,17 @@ namespace BaseCore.APIService.Controllers
                 return ToDto(p, avg, cnt);
             }).ToList();
 
+            // Giá cao nhất toàn bộ DB (không filter) → để frontend set max cho slider
+            var globalMaxPrice = await _context.Products.MaxAsync(p => (decimal?)p.Price) ?? 0;
+
             return Ok(new
             {
                 items,
                 totalCount,
                 page,
                 pageSize,
-                totalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                totalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+                globalMaxPrice
             });
         }
 

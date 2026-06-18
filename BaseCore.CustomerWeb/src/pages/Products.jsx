@@ -29,7 +29,8 @@ export default function Products() {
   const catFilter = searchParams.get('cat') || ''
   const query = searchParams.get('q') || ''
   const [sort, setSort] = useState('default')
-  const [priceRange, setPriceRange] = useState(3000000)
+  const [priceRange, setPriceRange] = useState(null)      // null = chưa biết max, hiển thị tất cả
+  const [maxPriceLimit, setMaxPriceLimit] = useState(0)   // giá cao nhất từ DB
   const [page, setPage] = useState(1)
   const [pageSize] = useState(12)
 
@@ -63,6 +64,13 @@ export default function Products() {
         setProducts(res.items || [])
         setTotalCount(res.totalCount || 0)
         setTotalPages(res.totalPages || Math.ceil((res.totalCount || 0) / pageSize))
+
+        // Lần đầu: set max slider = giá cao nhất từ DB
+        if (res.globalMaxPrice && maxPriceLimit === 0) {
+          const max = Math.ceil(res.globalMaxPrice)
+          setMaxPriceLimit(max)
+          setPriceRange(max)  // mặc định = max → hiển thị tất cả
+        }
       } catch (err) {
         setError(err.message)
       } finally {
@@ -129,14 +137,14 @@ export default function Products() {
           <div className={styles.filterGroup}>
             <h3>Giá tối đa</h3>
             <input
-              type="range" min={10000} max={3000000} step={10000}
-              value={priceRange}
+              type="range" min={0} max={maxPriceLimit || 1000000} step={10000}
+              value={priceRange ?? maxPriceLimit ?? 1000000}
               onChange={e => setPriceRange(+e.target.value)}
               className={styles.range}
             />
             <div className={styles.rangeLabel}>
               <span>0đ</span>
-              <span>{priceRange.toLocaleString('vi-VN')}đ</span>
+              <span>{(priceRange ?? maxPriceLimit ?? 0).toLocaleString('vi-VN')}đ</span>
             </div>
           </div>
         </aside>

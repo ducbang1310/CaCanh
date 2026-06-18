@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
       username: userData.username || userData.Username || null,
       name: userData.name || userData.Name || null,
       email: userData.email || userData.Email || null,
+      phone: userData.phone || userData.Phone || null,
       role: userData.role || userData.Role || 'user', // Default role: user
       roles: userData.roles || userData.Roles || [], // Array of roles for future use
       expiresIn: userData.expiresIn || userData.ExpiresIn || null,
