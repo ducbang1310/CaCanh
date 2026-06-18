@@ -118,6 +118,10 @@ const Products = () => {
         e.preventDefault();
         setError('');
 
+        if (!formData.name?.trim()) { setError('Tên sản phẩm không được để trống'); return; }
+        if (!formData.categoryId) { setError('Vui lòng chọn danh mục'); return; }
+        if (formData.price === '' || formData.price === null || parseFloat(formData.price) < 0) { setError('Giá sản phẩm không hợp lệ'); return; }
+
         const maleStock = parseInt(formData.maleStock) || 0;
         const femaleStock = parseInt(formData.femaleStock) || 0;
         const stock = parseInt(formData.stock) || 0;
@@ -387,7 +391,7 @@ const Products = () => {
             {/* Modal Thêm/Sửa */}
             {showModal && (
                 <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-                    <div className="modal-dialog">
+                    <div className="modal-dialog modal-lg modal-dialog-scrollable">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">
@@ -398,13 +402,13 @@ const Products = () => {
                                     <span>&times;</span>
                                 </button>
                             </div>
-                            <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
-                                    {error && (
-                                        <div className="alert alert-danger">
-                                            <i className="fas fa-exclamation-circle mr-2"></i>{error}
-                                        </div>
-                                    )}
+                            <form onSubmit={handleSubmit} noValidate>
+                                {error && (
+                                    <div className="alert alert-danger mx-3 mt-3 mb-0">
+                                        <i className="fas fa-exclamation-circle mr-2"></i>{error}
+                                    </div>
+                                )}
+                                <div className="modal-body" style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 210px)' }}>
                                     <div className="form-group">
                                         <label>
                                             <i className="fas fa-box mr-1 text-primary"></i>
