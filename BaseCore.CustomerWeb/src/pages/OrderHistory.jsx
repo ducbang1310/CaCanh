@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { orderService } from '../services/order/orderService';
+import { orderService } from '../services/order/orderService'
+import { useToast } from '../components/Toast'
+import ConfirmModal from '../components/ConfirmModal';
 import { reviewService } from '../services/review/reviewService';
 import styles from './OrderHistory.module.css';
 
@@ -50,6 +52,9 @@ export default function OrderHistory() {
     if (user) { fetchOrders(); fetchReviewedOrders(); }
   }, [user]);
 
+  const toast = useToast()
+  const [cancelConfirm, setCancelConfirm] = useState(null) // orderId đang chờ xác nhận
+
   const toggleExpand = (orderId) => {
     setExpandedOrders(prev => {
       const next = new Set(prev);
@@ -58,15 +63,19 @@ export default function OrderHistory() {
     });
   };
 
-  const handleCancelOrder = async (orderId) => {
-    if (window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
-      try {
-        await orderService.cancel(orderId);
-        alert('Hủy đơn thành công!');
-        fetchOrders();
-      } catch (error) {
-        alert(error.message || 'Không thể hủy đơn hàng');
+  const handleCancelOrder = async () => {
+    try {
+      const res = await orderService.cancel(cancelConfirm);
+      if (res.refundAmount > 0) {
+        toast.success(`Đơn hàng đã được hủy. Hoàn lại ${res.refundPercent}% tiền cọc (${Number(res.refundAmount).toLocaleString('vi-VN')}đ).`)
+      } else {
+        toast.success('Đơn hàng đã được hủy. Số lượng cá đã hoàn lại kho.')
       }
+      setCancelConfirm(null)
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.message || 'Không thể hủy đơn hàng, vui lòng thử lại')
+      setCancelConfirm(null)
     }
   };
 
@@ -198,8 +207,8 @@ export default function OrderHistory() {
                               💳 Thanh toán
                             </button>
                           )}
-                          {order.status === 'WaitingDeposit' && (
-                              <button onClick={() => handleCancelOrder(order.id)} className={styles.btnCancel}>
+                          {['WaitingDeposit', 'DepositPaid', 'Processing'].includes(order.status) && (
+                              <button onClick={() => setCancelConfirm(order.id)} className={styles.btnCancel}>
                                 ✕ Hủy đơn
                               </button>
                             )}
@@ -338,6 +347,27 @@ export default function OrderHistory() {
           </div>
         </div>
       )}
+
+      {/* Modal xác nhận hủy đơn */}
+      {cancelConfirm && (() => {
+        const cancelOrder = orders.find(o => o.id === cancelConfirm)
+        const refundMsg = cancelOrder?.status === 'DepositPaid'
+          ? '\n\nĐã đặt cọc → hoàn lại 80% tiền cọc, shop giữ 20% phí hủy.'
+          : cancelOrder?.status === 'Processing'
+          ? '\n\nĐang xử lý → hoàn lại 60% tiền cọc, shop giữ 40% chi phí xử lý.'
+          : ''
+        return (
+          <ConfirmModal
+            title="Hủy đơn hàng"
+            message={`Bạn có chắc muốn hủy đơn hàng #${cancelConfirm}?${refundMsg}\n\nSố lượng cá sẽ được hoàn lại kho.`}
+            confirmText="Hủy đơn hàng"
+            cancelText="Giữ lại"
+            danger
+            onConfirm={handleCancelOrder}
+            onCancel={() => setCancelConfirm(null)}
+          />
+        )
+      })()}
     </main>
   );
 }

@@ -244,8 +244,23 @@ namespace BaseCore.APIService.Controllers
             if (order.Status == "Cancelled")
                 return BadRequest(new { message = "Đơn hàng đã được huỷ trước đó" });
 
-            if (order.Status != "WaitingDeposit")
-                return BadRequest(new { message = "Chỉ có thể huỷ đơn khi chưa thanh toán" });
+            if (order.Status == "Completed")
+                return BadRequest(new { message = "Đơn hàng đã hoàn thành, không thể huỷ" });
+
+            if (order.Status == "Shipping")
+                return BadRequest(new { message = "Đơn hàng đang giao, không thể huỷ. Vui lòng liên hệ shop." });
+
+            // Tính hoàn tiền theo trạng thái
+            decimal refundPercent = order.Status switch
+            {
+                "WaitingDeposit" => 1.0m,   // 100% — chưa trả gì
+                "DepositPaid"    => 0.8m,   // 80%  — shop giữ 20% phí hủy
+                "Processing"     => 0.6m,   // 60%  — shop đã tốn công, giữ 40%
+                _ => 0m
+            };
+
+            var refundAmount = order.DepositAmount * refundPercent;
+            var penaltyAmount = order.DepositAmount - refundAmount;
 
             // Hoàn lại stock
             var details = await _orderDetailRepository.GetByOrderAsync(id);
@@ -282,7 +297,17 @@ namespace BaseCore.APIService.Controllers
 
             order.Status = "Cancelled";
             await _orderRepository.UpdateAsync(order);
-            return Ok(new { message = "Đơn hàng đã được huỷ, tồn kho đã được hoàn lại", order });
+
+            return Ok(new
+            {
+                message = order.Status == "WaitingDeposit"
+                    ? "Đơn hàng đã được huỷ, tồn kho đã được hoàn lại"
+                    : $"Đơn hàng đã được huỷ. Hoàn lại {refundPercent * 100}% tiền cọc ({refundAmount:N0}đ).",
+                order,
+                refundPercent = refundPercent * 100,
+                refundAmount,
+                penaltyAmount
+            });
         }
     }
 

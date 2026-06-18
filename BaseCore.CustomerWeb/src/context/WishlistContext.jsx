@@ -1,20 +1,38 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { useAuth } from './AuthContext'
 
 const WishlistContext = createContext(null)
-const STORAGE_KEY = 'aquaviet_wishlist'
+
+function getStorageKey(user) {
+  // Mỗi user có wishlist riêng, chưa login dùng key chung 'guest'
+  const userId = user?.userId || user?.id || 'guest'
+  return `aquaviet_wishlist_${userId}`
+}
 
 export function WishlistProvider({ children }) {
+  const { user } = useAuth()
+  const storageKey = getStorageKey(user)
+
   const [wishlist, setWishlist] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []
+      return JSON.parse(localStorage.getItem(storageKey)) || []
     } catch {
       return []
     }
   })
 
+  // Reload wishlist khi user thay đổi (login/logout)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(wishlist))
-  }, [wishlist])
+    try {
+      setWishlist(JSON.parse(localStorage.getItem(storageKey)) || [])
+    } catch {
+      setWishlist([])
+    }
+  }, [storageKey])
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(wishlist))
+  }, [wishlist, storageKey])
 
   const toggle = useCallback((product) => {
     setWishlist(prev =>

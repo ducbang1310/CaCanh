@@ -77,6 +77,20 @@ namespace BaseCore.AuthService.Controllers
                 return BadRequest(new { message = "Password must be at least 6 characters" });
             }
 
+            // Validate email format
+            if (!string.IsNullOrEmpty(request.Email) &&
+                !System.Text.RegularExpressions.Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            {
+                return BadRequest(new { message = "Email không đúng định dạng" });
+            }
+
+            // Validate phone format (VN: 10 số, bắt đầu bằng 0)
+            if (!string.IsNullOrEmpty(request.Phone) &&
+                !System.Text.RegularExpressions.Regex.IsMatch(request.Phone, @"^0\d{9}$"))
+            {
+                return BadRequest(new { message = "Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0" });
+            }
+
             try
             {
                 var user = new BaseCore.Entities.User

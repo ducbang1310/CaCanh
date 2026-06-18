@@ -17,10 +17,10 @@ function cartReducer(state, action) {
       if (exists)
         return state.map(i =>
           `${i.productId}-${i.selectedGender ?? ''}` === key
-            ? { ...i, quantity: i.quantity + 1 }
+            ? { ...i, quantity: i.quantity + (action.item.quantity || 1) }
             : i
         );
-      return [...state, { ...action.item, quantity: 1 }];
+      return [...state, { ...action.item, quantity: action.item.quantity || 1 }];
     }
     case 'REMOVE':
       return state.filter(i => i.id !== action.id);
@@ -81,7 +81,7 @@ export function CartProvider({ children }) {
   }, [isAuthenticated]);
 
   // item phải có selectedGender khi sản phẩm có phân giới tính
-  const add = useCallback(async (item, selectedGender = null) => {
+  const add = useCallback(async (item, selectedGender = null, quantity = 1) => {
     const productId = item.productId || item.id;
     if (!productId) {
       setError('Sản phẩm không có mã ID');
@@ -93,7 +93,7 @@ export function CartProvider({ children }) {
       name: item.name || item.productName || '',
       price: item.price || 0,
       image: item.image || item.imageUrl || '',
-      quantity: 1,
+      quantity,
       selectedGender,
     };
 
@@ -101,7 +101,7 @@ export function CartProvider({ children }) {
 
     try {
       setIsLoading(true);
-      const data = await cartService.addItem(productId, 1, selectedGender);
+      const data = await cartService.addItem(productId, quantity, selectedGender);
       // Đồng bộ lại với server để lấy đúng id
       if (data && data.items) {
         dispatch({ type: 'SET_CART', payload: mapCartItems(data.items) });

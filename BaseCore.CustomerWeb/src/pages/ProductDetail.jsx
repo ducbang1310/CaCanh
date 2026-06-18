@@ -116,7 +116,7 @@ export default function ProductDetail() {
       return
     }
     setGenderError('')
-    for (let i = 0; i < qty; i++) await add(product, isGenderProduct ? selectedGender : null)
+    await add(product, isGenderProduct ? selectedGender : null, qty)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }

@@ -88,6 +88,9 @@ builder.Services.AddScoped<IOrderRepositoryEF, OrderRepositoryEF>();
 builder.Services.AddScoped<IOrderDetailRepositoryEF, OrderDetailRepositoryEF>();
 builder.Services.AddScoped<IBlogRepositoryEF, BlogRepositoryEF>();
 
+// Background job: tự động hủy đơn quá 24h mỗi 5 phút
+builder.Services.AddHostedService<BaseCore.APIService.Services.AutoCancelOrderService>();
+
 // JWT Authentication
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? "YourSecretKeyForAuthenticationShouldBeLongEnough");
 builder.Services.AddAuthentication(x =>

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { orderService } from '../services/order/orderService'
+import { useToast } from '../components/Toast'
+import ConfirmModal from '../components/ConfirmModal'
 import styles from './Payment.module.css'
 
 const ACCOUNT_NO   = '0827027392472'
@@ -43,6 +45,8 @@ export default function Payment() {
   const [status, setStatus]           = useState(initialData?.status || 'WaitingDeposit')
   const [cancelling, setCancelling]   = useState(false)
   const [cancelError, setCancelError] = useState(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const toast = useToast()
 
   /* Giá trị hiển thị — ưu tiên order đã fetch, fallback initialData */
   const depositAmount  = order?.depositAmount  ?? initialData?.depositAmount  ?? 0
@@ -125,14 +129,20 @@ export default function Payment() {
   }
 
   const handleCancel = async () => {
-    if (!window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) return
     try {
       setCancelling(true)
       setCancelError(null)
-      await orderService.cancel(orderId)
+      const res = await orderService.cancel(orderId)
       setStatus('Cancelled')
+      setShowCancelModal(false)
+      if (res.refundAmount > 0) {
+        toast.success(`Đơn hàng đã được hủy. Hoàn lại ${res.refundPercent}% tiền cọc (${Number(res.refundAmount).toLocaleString('vi-VN')}đ).`)
+      } else {
+        toast.success('Đơn hàng đã được hủy. Số lượng cá đã hoàn lại kho.')
+      }
     } catch (err) {
       setCancelError(err.message || 'Không thể hủy đơn hàng')
+      toast.error(err.message || 'Không thể hủy đơn hàng, vui lòng thử lại')
     } finally {
       setCancelling(false)
     }
@@ -150,10 +160,20 @@ export default function Payment() {
   }
 
   const isExpired  = timeLeft !== null && timeLeft <= 0
-  const canCancel  = status === 'WaitingDeposit' && timeLeft !== null && timeLeft > 0
+  const canCancelWaiting = status === 'WaitingDeposit' && timeLeft !== null && timeLeft > 0
+  const canCancelPaid = ['DepositPaid', 'Processing'].includes(status)
+  const canCancel = canCancelWaiting || canCancelPaid
   const isPaid     = ['DepositPaid', 'Processing', 'Shipping', 'Completed'].includes(status)
   const isCancelled = status === 'Cancelled'
   const statusInfo = STATUS_LABELS[status] || { text: status, color: '#555', bg: '#f5f5f5' }
+
+  // Thông tin hoàn tiền theo trạng thái
+  const refundInfo = {
+    WaitingDeposit: { percent: 100, note: 'Chưa thanh toán — hủy miễn phí' },
+    DepositPaid:    { percent: 80,  note: 'Hoàn lại 80% tiền cọc, shop giữ 20% phí hủy' },
+    Processing:     { percent: 60,  note: 'Hoàn lại 60% tiền cọc, shop giữ 40% (đã tốn chi phí xử lý)' },
+  }
+  const currentRefund = refundInfo[status]
 
   return (
     <main className={styles.page}>
@@ -370,16 +390,23 @@ export default function Payment() {
               </div>
             )}
 
-            {/* Hủy đơn - trong 24h chưa thanh toán */}
+            {/* Hủy đơn */}
             {canCancel && (
               <div className={styles.cancelSection}>
-                <div className={styles.cancelInfo}>
-                  <span>⏱️ Thời gian hủy đơn: </span>
-                  <strong className={timeLeft < 3600000 ? styles.urgentText : ''}>
-                    {formatCountdown(timeLeft)}
-                  </strong>
-                </div>
-                <button className={styles.cancelBtn} onClick={handleCancel} disabled={cancelling}>
+                {canCancelWaiting && (
+                  <div className={styles.cancelInfo}>
+                    <span>⏱️ Còn lại: </span>
+                    <strong className={timeLeft < 3600000 ? styles.urgentText : ''}>
+                      {formatCountdown(timeLeft)}
+                    </strong>
+                  </div>
+                )}
+                {canCancelPaid && currentRefund && (
+                  <div className={styles.cancelInfo} style={{ fontSize: 13, color: '#e65100' }}>
+                    ⚠️ {currentRefund.note}
+                  </div>
+                )}
+                <button className={styles.cancelBtn} onClick={() => setShowCancelModal(true)} disabled={cancelling}>
                   {cancelling ? 'Đang hủy...' : '❌ Hủy đơn hàng'}
                 </button>
               </div>
@@ -401,6 +428,8 @@ export default function Payment() {
                 <li>Admin xác nhận trong vài phút sau khi nhận chuyển khoản</li>
                 <li>Phần còn lại <strong>{formatPrice(totalAmount - depositAmount)}</strong> thanh toán khi nhận hàng</li>
                 <li>Bạn có thể <strong>hủy đơn bất cứ lúc nào trong 24h</strong> nếu chưa thanh toán</li>
+                <li>Đã cọc mà hủy → hoàn <strong>80%</strong> cọc. Đang xử lý mà hủy → hoàn <strong>60%</strong></li>
+                <li>Đơn đang giao hoặc đã hoàn thành <strong>không thể hủy</strong></li>
                 <li>Sau <strong>24 giờ</strong> mà chưa thanh toán, đơn hàng sẽ <strong>tự động hủy</strong></li>
               </ul>
             </div>
@@ -408,6 +437,23 @@ export default function Payment() {
           </div>
         </div>
       </div>
+
+      {/* Modal xác nhận hủy đơn */}
+      {showCancelModal && (
+        <ConfirmModal
+          title="Hủy đơn hàng"
+          message={
+            currentRefund?.percent === 100
+              ? `Bạn có chắc muốn hủy đơn hàng #${orderId}? Chưa thanh toán nên sẽ không mất phí.`
+              : `Bạn có chắc muốn hủy đơn hàng #${orderId}?\n\n${currentRefund?.note || ''}\n\nSố lượng cá sẽ được hoàn lại kho.`
+          }
+          confirmText="Hủy đơn hàng"
+          cancelText="Giữ lại"
+          danger
+          onConfirm={handleCancel}
+          onCancel={() => setShowCancelModal(false)}
+        />
+      )}
     </main>
   )
 }
