@@ -122,7 +122,7 @@ export default function Cart() {
     navigate(`/payment/${checkoutResult.orderId}`, { state: { order: checkoutResult } })
   }
 
-  if (isLoading) return (
+  if (isLoading && cart.length === 0) return (
     <main className={styles.page}>
       <div className={styles.container}>
         <div className={styles.empty}>
@@ -213,7 +213,18 @@ export default function Cart() {
 
                 <div className={styles.qtyControl}>
                   <button onClick={() => item.quantity === 1 ? remove(item.id) : setQty(item.id, item.quantity - 1)}>−</button>
-                  <span>{item.quantity}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={item.stock || 999}
+                    value={item.quantity}
+                    onChange={e => {
+                      const val = parseInt(e.target.value)
+                      if (!val || val < 1) return setQty(item.id, 1)
+                      if (item.stock && val > item.stock) return setQty(item.id, item.stock)
+                      setQty(item.id, val)
+                    }}
+                  />
                   <button
                     onClick={() => setQty(item.id, item.quantity + 1)}
                     disabled={item.stock !== null && item.quantity >= item.stock}
