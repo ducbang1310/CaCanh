@@ -30,15 +30,31 @@ const Products = () => {
     });
     const [error, setError] = useState('');
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
+    const [weightedAvgPrice, setWeightedAvgPrice] = useState(0);
     const { isAdmin } = useAuth();
 
     useEffect(() => {
         loadCategories();
+        loadAllProductsForStats();
     }, []);
 
     useEffect(() => {
         loadProducts();
     }, [page, keyword, categoryId]);
+
+    const loadAllProductsForStats = async () => {
+        try {
+            const response = await productService.getAll('', null, 1, 9999);
+            const allProds = response.items || [];
+            const totalStock = allProds.reduce((sum, p) => sum + (p.stock || 0), 0);
+            const totalValue = allProds.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0);
+            setWeightedAvgPrice(totalStock > 0 ? totalValue / totalStock : 0);
+        } catch (e) {
+            console.error('Failed to load stats:', e);
+        }
+    };
 
     const loadCategories = async () => {
         try {
@@ -73,6 +89,15 @@ const Products = () => {
         setPage(1);
         loadProducts();
     };
+
+    const filteredProducts = products.filter(p => {
+        const price = p.price || 0;
+        const min = minPrice !== '' ? parseFloat(minPrice) : null;
+        const max = maxPrice !== '' ? parseFloat(maxPrice) : null;
+        if (min !== null && price < min) return false;
+        if (max !== null && price > max) return false;
+        return true;
+    });
 
     const openModal = (product = null) => {
         if (product) {
@@ -224,9 +249,9 @@ const Products = () => {
                     <div className="card card-primary">
                         <div className="card-header">
                             <div className="row align-items-center">
-                                <div className="col-md-7">
-                                    <form onSubmit={handleSearch} className="form-inline">
-                                        <div className="input-group input-group-sm mr-2" style={{ width: '220px' }}>
+                                <div className="col-md-8">
+                                    <form onSubmit={handleSearch} className="form-inline flex-wrap" style={{ gap: '6px' }}>
+                                        <div className="input-group input-group-sm" style={{ width: '200px' }}>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -242,7 +267,7 @@ const Products = () => {
                                         </div>
                                         <select
                                             className="form-control form-control-sm"
-                                            style={{ width: '160px' }}
+                                            style={{ width: '140px' }}
                                             value={categoryId}
                                             onChange={(e) => setCategoryId(e.target.value)}
                                         >
@@ -251,9 +276,39 @@ const Products = () => {
                                                 <option key={cat.id} value={cat.id}>{cat.name}</option>
                                             ))}
                                         </select>
+                                        <div className="input-group input-group-sm" style={{ width: '120px' }}>
+                                            <div className="input-group-prepend">
+                                                <span className="input-group-text" style={{ fontSize: '0.75rem' }}>Từ</span>
+                                            </div>
+                                            <input
+                                                type="number"
+                                                className="form-control"
+                                                placeholder="0"
+                                                min="0"
+                                                value={minPrice}
+                                                onChange={(e) => setMinPrice(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="input-group input-group-sm" style={{ width: '120px' }}>
+                                            <div className="input-group-prepend">
+                                                <span className="input-group-text" style={{ fontSize: '0.75rem' }}>Đến</span>
+                                            </div>
+                                            <input
+                                                type="number"
+                                                className="form-control"
+                                                placeholder="∞"
+                                                min="0"
+                                                value={maxPrice}
+                                                onChange={(e) => setMaxPrice(e.target.value)}
+                                            />
+                                        </div>
+                                        <span className="badge badge-info" style={{ fontSize: '0.8rem', padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                                            <i className="fas fa-calculator mr-1"></i>
+                                            Giá TB kho: <strong>{weightedAvgPrice.toLocaleString('vi-VN', { maximumFractionDigits: 0 })} đ</strong>
+                                        </span>
                                     </form>
                                 </div>
-                                <div className="col-md-5 text-right">
+                                <div className="col-md-4 text-right">
                                     {isAdmin() && (
                                         <button className="btn btn-success btn-sm" onClick={() => openModal()}>
                                             <i className="fas fa-plus mr-1"></i> Thêm sản phẩm
@@ -284,7 +339,7 @@ const Products = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {products.length === 0 ? (
+                                                {filteredProducts.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={isAdmin() ? 7 : 6} className="text-center py-4 text-muted">
                                                             <i className="fas fa-box-open fa-2x mb-2 d-block"></i>
@@ -292,7 +347,7 @@ const Products = () => {
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    products.map(product => (
+                                                    filteredProducts.map(product => (
                                                         <tr key={product.id}>
                                                             <td className="text-center">
                                                                 {product.imageUrl ? (
@@ -323,7 +378,7 @@ const Products = () => {
                                                             <td><strong>{product.name}</strong></td>
                                                             <td>
                                                                 <span className="badge badge-light" style={{ background: '#e8f4fd', color: '#3d8bc2', border: '1px solid #a8d5f0' }}>
-                                                                    {product.category?.name || 'N/A'}
+                                                                    {product.categoryId ? categories.find(c => c.id === product.categoryId)?.name || 'N/A' : 'Chưa phân loại'}
                                                                 </span>
                                                             </td>
                                                             <td className="font-weight-bold text-danger">
