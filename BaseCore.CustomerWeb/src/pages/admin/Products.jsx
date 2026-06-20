@@ -37,24 +37,11 @@ const Products = () => {
 
     useEffect(() => {
         loadCategories();
-        loadAllProductsForStats();
     }, []);
 
     useEffect(() => {
         loadProducts();
     }, [page, keyword, categoryId]);
-
-    const loadAllProductsForStats = async () => {
-        try {
-            const response = await productService.getAll('', null, 1, 9999);
-            const allProds = response.items || [];
-            const totalStock = allProds.reduce((sum, p) => sum + (p.stock || 0), 0);
-            const totalValue = allProds.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0);
-            setWeightedAvgPrice(totalStock > 0 ? totalValue / totalStock : 0);
-        } catch (e) {
-            console.error('Failed to load stats:', e);
-        }
-    };
 
     const loadCategories = async () => {
         try {
@@ -77,6 +64,7 @@ const Products = () => {
             setProducts(response.items || []);
             setTotalPages(response.totalPages || Math.ceil((response.totalCount || 0) / pageSize));
             setTotalCount(response.totalCount || 0);
+            setWeightedAvgPrice(response.weightedAvgPrice || 0);
         } catch (error) {
             console.error('Failed to load products:', error);
         } finally {

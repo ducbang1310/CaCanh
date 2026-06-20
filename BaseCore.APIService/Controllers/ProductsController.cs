@@ -75,6 +75,11 @@ namespace BaseCore.APIService.Controllers
             // Giá cao nhất toàn bộ DB (không filter) → để frontend set max cho slider
             var globalMaxPrice = await _context.Products.MaxAsync(p => (decimal?)p.Price) ?? 0;
 
+            // Giá TB có trọng số theo tồn kho: SUM(price*stock)/SUM(stock)
+            var totalStock = await _context.Products.SumAsync(p => (long?)p.Stock) ?? 0;
+            var totalValue = await _context.Products.SumAsync(p => (decimal?)(p.Price * p.Stock)) ?? 0;
+            var weightedAvgPrice = totalStock > 0 ? totalValue / totalStock : 0;
+
             return Ok(new
             {
                 items,
@@ -82,7 +87,8 @@ namespace BaseCore.APIService.Controllers
                 page,
                 pageSize,
                 totalPages = (int)Math.Ceiling((double)totalCount / pageSize),
-                globalMaxPrice
+                globalMaxPrice,
+                weightedAvgPrice
             });
         }
 
